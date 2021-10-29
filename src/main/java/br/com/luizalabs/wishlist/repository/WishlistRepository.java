@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface WishlistRepository extends MongoRepository<Wishlist, ObjectId> {
 
-    boolean existsByName(String documentNumber);
+    boolean existsByCustomerId(String customerId);
 }

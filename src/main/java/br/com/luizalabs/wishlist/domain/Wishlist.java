@@ -1,6 +1,7 @@
 package br.com.luizalabs.wishlist.domain;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,9 @@ public class Wishlist {
 
     @Id
     private ObjectId id;
-    private String name;
+    private String customerId;
+    private List<String> products;
+
     @CreatedDate
     private LocalDateTime creationDate;
     @LastModifiedDate

@@ -65,22 +65,22 @@ class WishlistServiceTest {
 
     @Test
     void createWithSuccess() {
-        when(repository.existsByName(any())).thenReturn(false);
+        when(repository.existsByCustomerId(any())).thenReturn(false);
         when(repository.save(any())).thenReturn(wishlist);
 
         assertResult(service.create(createWishlistPayload));
 
-        verify(repository).existsByName(any());
+        verify(repository).existsByCustomerId(any());
         verify(repository).save(any());
     }
 
     @Test
     void createWithWishlistAlreadyExistsException() {
-        when(repository.existsByName(any())).thenReturn(true);
+        when(repository.existsByCustomerId(any())).thenReturn(true);
 
         assertThrows(WishlistAlreadyExistsException.class, () -> service.create(createWishlistPayload));
 
-        verify(repository).existsByName(any());
+        verify(repository).existsByCustomerId(any());
         verify(repository, never()).save(any());
     }
 
@@ -150,7 +150,7 @@ class WishlistServiceTest {
     void findAllWithSuccess() {
         Pageable page = PageRequest.of(0, 1);
         WishlistSearchParams params = new WishlistSearchParams();
-        params.setName(wishlist.getName());
+        params.setCustomerId(wishlist.getCustomerId());
 
         Page<Wishlist> wishlistPage = new PageImpl<>(List.of(wishlist), page,
                 Integer.MAX_VALUE);
@@ -167,6 +167,6 @@ class WishlistServiceTest {
     public void assertResult(WishlistResponse result) {
         assertNotNull(result);
         assertEquals(result.getId(), id.toHexString());
-        assertEquals(result.getName(), wishlist.getName());
+        assertEquals(result.getCustomerId(), wishlist.getCustomerId());
     }
 }

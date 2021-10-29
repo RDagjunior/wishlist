@@ -8,9 +8,9 @@ import lombok.Data;
 @Data
 public class UpdateWishlistPayload {
 
-    @ApiModelProperty(value = "Wishlist's name.", required = true)
-    @Size(max = 120, message = "{Wishlist.name.size}")
-    @NotBlank(message = "{Wishlist.name.notBlank}")
-    private String name;
+    @ApiModelProperty(value = "Wishlist's customerId.", required = true)
+    @Size(max = 120, message = "{Wishlist.customerId.size}")
+    @NotBlank(message = "{Wishlist.customerId.notBlank}")
+    private String customerId;
 
 }

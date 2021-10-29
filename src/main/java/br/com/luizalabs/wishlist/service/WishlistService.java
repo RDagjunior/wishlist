@@ -8,7 +8,6 @@ import br.com.luizalabs.wishlist.domain.search.WishlistSearchParams;
 import br.com.luizalabs.wishlist.exception.WishlistAlreadyExistsException;
 import br.com.luizalabs.wishlist.exception.WishlistNotFoundException;
 import br.com.luizalabs.wishlist.repository.WishlistRepository;
-import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -24,16 +23,16 @@ public class WishlistService {
 
     private final WishlistRepository repository;
 
-    public WishlistResponse create(@Valid CreateWishlistPayload payload) {
+    public WishlistResponse create(CreateWishlistPayload payload) {
         log.info("Create Wishlist - Payload: {}", payload);
-        if (repository.existsByName(payload.getName())) {
+        if (repository.existsByCustomerId(payload.getCustomerId())) {
             throw new WishlistAlreadyExistsException();
         }
         return new WishlistResponse(repository.save(createModel(payload)));
     }
 
 
-    public WishlistResponse update(ObjectId id, @Valid UpdateWishlistPayload payload) {
+    public WishlistResponse update(ObjectId id, UpdateWishlistPayload payload) {
         log.info("Update Wishlist - Id: {} Payload: {}", id, payload);
 
         return repository.findById(id).map(wishlist -> repository.save(updateModel(payload, wishlist))
@@ -62,17 +61,17 @@ public class WishlistService {
 
     private Wishlist createModel(CreateWishlistPayload payload) {
         return Wishlist.builder()
-                .name(payload.getName())
+                .customerId(payload.getCustomerId())
                 .build();
     }
 
     private Wishlist updateModel(UpdateWishlistPayload payload, Wishlist model) {
-        model.setName(payload.getName());
+        model.setCustomerId(payload.getCustomerId());
         return model;
     }
 
     private Wishlist filters(final WishlistSearchParams search) {
-        return Wishlist.builder().name(search.getName())
+        return Wishlist.builder().customerId(search.getCustomerId())
                 .build();
     }
 

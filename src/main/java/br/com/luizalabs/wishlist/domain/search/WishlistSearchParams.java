@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WishlistSearchParams {
 
-    @ApiModelProperty("Search by wishlist's name")
-    private String name;
+    @ApiModelProperty("Search by wishlist's customer id")
+    private String customerId;
 }

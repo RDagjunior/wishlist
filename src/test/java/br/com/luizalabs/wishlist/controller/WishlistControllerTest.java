@@ -209,17 +209,17 @@ class WishlistControllerTest {
         given(service.findAll(any(Pageable.class), any(WishlistSearchParams.class))).willReturn(page);
 
         final WishlistSearchParams params = WishlistSearchParams.builder()
-                .name("Test")
+                .customerId("Test")
                 .build();
 
         mockMvc.perform(get(BASE_URL)
-                        .queryParam("name", params.getName())
+                        .queryParam("customerId", params.getCustomerId())
                         .queryParam("page", String.valueOf(page.getNumber()))
                         .queryParam("size", String.valueOf(page.getSize())))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].id", is(wishlistResponse.getId())))
-                .andExpect(jsonPath("$.content[0].name", is(wishlistResponse.getName())))
+                .andExpect(jsonPath("$.content[0].customerId", is(wishlistResponse.getCustomerId())))
                 .andExpect(jsonPath("$.numberOfElements", is(1)));
 
         final ArgumentCaptor<WishlistSearchParams> searchParamsCaptor = ArgumentCaptor.forClass(WishlistSearchParams.class);
@@ -228,7 +228,7 @@ class WishlistControllerTest {
         verify(service, Mockito.times(1)).findAll(pageableCaptor.capture(), searchParamsCaptor.capture());
 
         final WishlistSearchParams searchParam = searchParamsCaptor.getValue();
-        assertEquals(params.getName(), searchParam.getName());
+        assertEquals(params.getCustomerId(), searchParam.getCustomerId());
 
         final Pageable pageableParam = pageableCaptor.getValue();
         assertEquals(pageable.getPageNumber(), pageableParam.getPageNumber());
@@ -239,6 +239,6 @@ class WishlistControllerTest {
     private void assertResult(ResultActions resultActions) throws Exception {
         resultActions.andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id", is(wishlistResponse.getId())))
-                .andExpect(jsonPath("$.name", is(wishlistResponse.getName())));
+                .andExpect(jsonPath("$.customerId", is(wishlistResponse.getCustomerId())));
     }
 }

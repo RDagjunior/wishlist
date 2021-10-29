@@ -1,3 +1,7 @@
 {
-  "name": "Test"
+  "customerId": "Test",
+  "products": [
+    "productId1",
+    "productId2"
+  ]
 }
