@@ -1,0 +1,5 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://wishlist-user:wishlist-password@localhost:27017/?authSource=wishlist
+      database: wishlist
