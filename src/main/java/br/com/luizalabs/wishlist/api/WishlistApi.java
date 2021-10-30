@@ -14,36 +14,38 @@ import javax.validation.constraints.NotBlank;
 @Api(tags = "Wishlist Api")
 public interface WishlistApi {
 
-    @ApiOperation(value = "Create new Wishlist")
+    @ApiOperation(value = "Add a product to a customer's wishlist")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Created"),
-            @ApiResponse(code = 400, message = "Invalid payload value(s)"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Forbidden"),
-            @ApiResponse(code = 409, message = "Wishlist already exists"),
+            @ApiResponse(code = 201, message = "Product added to the wishlist"),
+            @ApiResponse(code = 400, message = "Invalid payload value(s) or wishlist with the maximum accepted number of products"),
+            @ApiResponse(code = 409, message = "Product already exists on this wishlist"),
             @ApiResponse(code = 500, message = "Internal Server Error")})
     WishlistResponse addProduct(@ApiParam(required = true) @Valid AddProductPayload payload);
 
-    @ApiOperation(value = "Find Wishlist by id")
+    @ApiOperation(value = "Find a customer's wishlist by his id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Ok", response = WishlistResponse.class),
             @ApiResponse(code = 400, message = "Invalid id value"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 404, message = "Wishlist not found"),
             @ApiResponse(code = 500, message = "Internal Server Error")})
-    WishlistResponse findById(@ApiParam(value = "Wishlist customer's id", required = true) @NotBlank String id);
+    WishlistResponse findById(
+            @ApiParam(value = "Wishlist customer's id", required = true) String customerId);
 
-    @ApiOperation(value = "Delete Wishlist by id")
+    @ApiOperation(value = "Delete a product from a customer's wishlist by id")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "Accepted"),
-            @ApiResponse(code = 400, message = "Invalid id value"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 200, message = "Product deleted from wishlist", response = WishlistResponse.class),
             @ApiResponse(code = 404, message = "Wishlist not found"),
             @ApiResponse(code = 500, message = "Internal Server Error")})
-    WishlistResponse delete(@ApiParam(value = "Wishlist customer's id", required = true) @NotBlank String customerId, @NotBlank String productId);
+    WishlistResponse delete(
+            @ApiParam(value = "Wishlist customer's id", required = true) String customerId,
+            @NotBlank(message = "{AddProductPayload.productId.notBlank}") String productId);
 
-    boolean hasProduct(@ApiParam(value = "Wishlist customer's id", required = true) @NotBlank String customerId,
+    @ApiOperation(value = "Verify if a product is already on that customer's wishlist")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "True if the product is already on that customers wishlist, otherwise false", response = boolean.class),
+            @ApiResponse(code = 404, message = "Wishlist not found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")})
+    boolean hasProduct(
+            @ApiParam(value = "Wishlist customer's id", required = true) @NotBlank(message = "{AddProductPayload.customerId.notBlank}") String customerId,
             @ApiParam(value = "Product id to check if it is already on the wishlist", required = true) @NotBlank String productId);
 }

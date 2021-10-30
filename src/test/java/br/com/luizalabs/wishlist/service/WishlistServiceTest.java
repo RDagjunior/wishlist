@@ -44,7 +44,6 @@ class WishlistServiceTest {
 
     public void assertResult(WishlistResponse result) {
         assertNotNull(result);
-        assertEquals(result.getId(), id.toHexString());
         assertEquals(result.getCustomerId(), wishlist.getCustomerId());
     }
 }

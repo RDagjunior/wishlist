@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/wishlists")
+@RequestMapping("/customer-wishlists")
 public class WishlistController implements WishlistApi {
 
     private final WishlistService service;
@@ -46,7 +46,7 @@ public class WishlistController implements WishlistApi {
     }
 
     @Override
-    @GetMapping("/{customerId}/exists/{productId}")
+    @GetMapping("/{customerId}/existsProduct/{productId}")
     @ResponseStatus(code = HttpStatus.OK)
     public boolean hasProduct(@PathVariable String customerId, @PathVariable String productId) {
         return service.hasProduct(customerId, productId);

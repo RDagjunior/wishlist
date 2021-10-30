@@ -9,7 +9,7 @@ import lombok.Data;
 public class AddProductPayload {
 
     @ApiModelProperty(value = "Id of the customer that own the Wishlist.", required = true)
-    @Size(max = 120, message = "{AddProductPayload.customerId.size}")
+    @Size(max = 20, message = "{AddProductPayload.customerId.size}")
     @NotBlank(message = "{AddProductPayload.customerId.notBlank}")
     private String customerId;
 
