@@ -1,5 +1,6 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://wishlist-user:wishlist-password@localhost:27017/?authSource=wishlist
+      host: localhost
+      port: 27017
       database: wishlist
