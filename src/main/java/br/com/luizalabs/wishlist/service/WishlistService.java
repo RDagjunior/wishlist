@@ -1,19 +1,16 @@
 package br.com.luizalabs.wishlist.service;
 
 import br.com.luizalabs.wishlist.domain.Wishlist;
-import br.com.luizalabs.wishlist.domain.payload.CreateWishlistPayload;
-import br.com.luizalabs.wishlist.domain.payload.UpdateWishlistPayload;
+import br.com.luizalabs.wishlist.domain.payload.AddProductPayload;
 import br.com.luizalabs.wishlist.domain.response.WishlistResponse;
-import br.com.luizalabs.wishlist.domain.search.WishlistSearchParams;
-import br.com.luizalabs.wishlist.exception.WishlistAlreadyExistsException;
+import br.com.luizalabs.wishlist.exception.ProductAlreadyOnWishListException;
 import br.com.luizalabs.wishlist.exception.WishlistNotFoundException;
+import br.com.luizalabs.wishlist.exception.WishlistTooBigException;
 import br.com.luizalabs.wishlist.repository.WishlistRepository;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,60 +20,58 @@ public class WishlistService {
 
     private final WishlistRepository repository;
 
-    public WishlistResponse create(CreateWishlistPayload payload) {
-        log.info("Create Wishlist - Payload: {}", payload);
+    public WishlistResponse addProduct(AddProductPayload payload) {
+        log.info("Add a product to the customer's wishlist - Payload: {}", payload);
+        Wishlist customersWishList = createModel(payload);
+
         if (repository.existsByCustomerId(payload.getCustomerId())) {
-            throw new WishlistAlreadyExistsException();
+            customersWishList = getWishlistByCustomerId(payload.getCustomerId());
+            validateWishList(customersWishList, payload);
+            customersWishList.getProducts().add(payload.getProductId());
         }
-        return new WishlistResponse(repository.save(createModel(payload)));
+        return new WishlistResponse(repository.save(customersWishList));
     }
 
-
-    public WishlistResponse update(ObjectId id, UpdateWishlistPayload payload) {
-        log.info("Update Wishlist - Id: {} Payload: {}", id, payload);
-
-        return repository.findById(id).map(wishlist -> repository.save(updateModel(payload, wishlist))
-                ).map(WishlistResponse::new)
-                .orElseThrow(WishlistNotFoundException::new);
+    private void validateWishList(Wishlist customersWishList, AddProductPayload payload) {
+        if (customersWishList.getProducts().size() == 20) {
+            throw new WishlistTooBigException();
+        }
+        if (findProductOnWishList(customersWishList, payload.getProductId()).isPresent()) {
+            throw new ProductAlreadyOnWishListException();
+        }
     }
 
-    public WishlistResponse findById(ObjectId id) {
-        return new WishlistResponse(getWishlistById(id));
+    private Optional<String> findProductOnWishList(Wishlist customersWishList, String productId) {
+        return customersWishList.getProducts().stream().filter(product -> product.equals(productId)).findAny();
     }
 
-    public void delete(ObjectId id) {
-        log.info("Delete wishlist -  Id: {}", id);
-        final var wishlist = getWishlistById(id);
-
-        repository.delete(wishlist);
+    public WishlistResponse findById(String customerId) {
+        return new WishlistResponse(getWishlistByCustomerId(customerId));
     }
 
-    private Wishlist getWishlistById(ObjectId id) {
-        return repository.findById(id).orElseThrow(WishlistNotFoundException::new);
+    public WishlistResponse delete(String customerId, String productId) {
+        log.info("Delete wishlist -  customerId: {}, productId: {}", customerId, productId);
+        final var customersWishList = getWishlistByCustomerId(customerId);
+
+        if (findProductOnWishList(customersWishList, productId).isPresent()) {
+            customersWishList.getProducts().remove(productId);
+        }
+        return new WishlistResponse(repository.save(customersWishList));
     }
 
-    public Page<WishlistResponse> findAll(Pageable pageable, WishlistSearchParams search) {
-        return repository.findAll(example(search), pageable).map(WishlistResponse::new);
+    private Wishlist getWishlistByCustomerId(String customerId) {
+        return repository.findByCustomerId(customerId).orElseThrow(WishlistNotFoundException::new);
     }
 
-    private Wishlist createModel(CreateWishlistPayload payload) {
+    private Wishlist createModel(AddProductPayload payload) {
         return Wishlist.builder()
+                .products(List.of(payload.getProductId()))
                 .customerId(payload.getCustomerId())
                 .build();
     }
 
-    private Wishlist updateModel(UpdateWishlistPayload payload, Wishlist model) {
-        model.setCustomerId(payload.getCustomerId());
-        return model;
+    public boolean hasProduct(String customerId, String productId) {
+        var customersWishList = getWishlistByCustomerId(customerId);
+        return findProductOnWishList(customersWishList, productId).isPresent();
     }
-
-    private Wishlist filters(final WishlistSearchParams search) {
-        return Wishlist.builder().customerId(search.getCustomerId())
-                .build();
-    }
-
-    private Example<Wishlist> example(final WishlistSearchParams search) {
-        return Example.of(filters(search));
-    }
-
 }

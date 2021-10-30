@@ -3,8 +3,9 @@ package br.com.luizalabs.wishlist.exception.handler;
 import static java.util.stream.Collectors.toList;
 
 import br.com.luizalabs.wishlist.domain.response.ErrorResponse;
-import br.com.luizalabs.wishlist.exception.WishlistAlreadyExistsException;
+import br.com.luizalabs.wishlist.exception.ProductAlreadyOnWishListException;
 import br.com.luizalabs.wishlist.exception.WishlistNotFoundException;
+import br.com.luizalabs.wishlist.exception.WishlistTooBigException;
 import java.util.Collection;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -50,9 +51,15 @@ public class ExceptionHandlerController {
         return exceptionMessage(exception);
     }
 
-    @ExceptionHandler(WishlistAlreadyExistsException.class)
+    @ExceptionHandler(WishlistTooBigException.class)
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleWishlistTooBigException(WishlistTooBigException exception) {
+        return exceptionMessage(exception);
+    }
+
+    @ExceptionHandler(ProductAlreadyOnWishListException.class)
     @ResponseStatus(code = HttpStatus.CONFLICT)
-    public ErrorResponse handleWishlistAlreadyExistsException(WishlistAlreadyExistsException exception) {
+    public ErrorResponse handleProductAlreadyOnWishListException(ProductAlreadyOnWishListException exception) {
         return exceptionMessage(exception);
     }
 
