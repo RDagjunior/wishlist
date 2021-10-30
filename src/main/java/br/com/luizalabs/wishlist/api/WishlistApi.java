@@ -36,7 +36,7 @@ public interface WishlistApi {
             @ApiResponse(code = 200, message = "Product deleted from wishlist", response = WishlistResponse.class),
             @ApiResponse(code = 404, message = "Wishlist not found"),
             @ApiResponse(code = 500, message = "Internal Server Error")})
-    WishlistResponse delete(
+    WishlistResponse removeProductFromCustomerWishlist(
             @ApiParam(value = "Wishlist customer's id", required = true) String customerId,
             @NotBlank(message = "{AddProductPayload.productId.notBlank}") String productId);
 

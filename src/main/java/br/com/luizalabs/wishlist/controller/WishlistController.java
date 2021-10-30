@@ -41,8 +41,8 @@ public class WishlistController implements WishlistApi {
     @Override
     @DeleteMapping("/{customerId}")
     @ResponseStatus(code = HttpStatus.OK)
-    public WishlistResponse delete(@PathVariable String customerId, @RequestParam String productId) {
-        return service.delete(customerId, productId);
+    public WishlistResponse removeProductFromCustomerWishlist(@PathVariable String customerId, @RequestParam String productId) {
+        return service.removeProductFromCustomerWishlist(customerId, productId);
     }
 
     @Override

@@ -7,7 +7,6 @@ import br.com.luizalabs.wishlist.exception.ProductAlreadyOnWishListException;
 import br.com.luizalabs.wishlist.exception.WishlistNotFoundException;
 import br.com.luizalabs.wishlist.exception.WishlistTooBigException;
 import java.util.Collection;
-import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -33,15 +32,6 @@ public class ExceptionHandlerController {
                 .stream()
                 .map(violation -> ErrorResponse.as(messageSource.getMessage(violation, LocaleContextHolder.getLocale()))
                         .tag(simpleKey(violation)))
-                .collect(toList());
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    public Collection<ErrorResponse> handleConstraintViolationException(ConstraintViolationException exception) {
-        return exception.getConstraintViolations()
-                .stream()
-                .map(violation -> ErrorResponse.as(violation.getMessage()).tag(violation.getPropertyPath().toString()))
                 .collect(toList());
     }
 

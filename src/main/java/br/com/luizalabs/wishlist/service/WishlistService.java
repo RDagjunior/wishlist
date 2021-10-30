@@ -49,8 +49,8 @@ public class WishlistService {
         return new WishlistResponse(getWishlistByCustomerId(customerId));
     }
 
-    public WishlistResponse delete(String customerId, String productId) {
-        log.info("Delete wishlist -  customerId: {}, productId: {}", customerId, productId);
+    public WishlistResponse removeProductFromCustomerWishlist(String customerId, String productId) {
+        log.info("Delete product from wishlist -  customerId: {}, productId: {}", customerId, productId);
         final var customersWishList = getWishlistByCustomerId(customerId);
 
         if (findProductOnWishList(customersWishList, productId).isPresent()) {
