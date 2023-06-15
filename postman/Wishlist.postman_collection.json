@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "f14b0bcd-2bdd-41e1-a1b0-de694b9b6268",
+		"_postman_id": "612e788b-a37d-4b6b-8b43-4a3cb6cc8e52",
 		"name": "Wishlist",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5657108"
 	},
 	"item": [
 		{
@@ -51,7 +52,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/customer-wishlists/1",
+					"raw": "http://localhost:8080/customer-wishlists/:customerId",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -59,7 +60,13 @@
 					"port": "8080",
 					"path": [
 						"customer-wishlists",
-						"1"
+						":customerId"
+					],
+					"variable": [
+						{
+							"key": "customerId",
+							"value": "1"
+						}
 					]
 				}
 			},
@@ -76,7 +83,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/customer-wishlists/1?productId=2",
+					"raw": "http://localhost:8080/customer-wishlists/:customerId?productId=5",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -84,12 +91,18 @@
 					"port": "8080",
 					"path": [
 						"customer-wishlists",
-						"1"
+						":customerId"
 					],
 					"query": [
 						{
 							"key": "productId",
-							"value": "2"
+							"value": "5"
+						}
+					],
+					"variable": [
+						{
+							"key": "customerId",
+							"value": "1"
 						}
 					]
 				}
@@ -102,7 +115,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/customer-wishlists/1/existsProduct/2",
+					"raw": "http://localhost:8080/customer-wishlists/:customerId/existsProduct/:productId",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -110,9 +123,19 @@
 					"port": "8080",
 					"path": [
 						"customer-wishlists",
-						"1",
+						":customerId",
 						"existsProduct",
-						"2"
+						":productId"
+					],
+					"variable": [
+						{
+							"key": "customerId",
+							"value": "1"
+						},
+						{
+							"key": "productId",
+							"value": "5"
+						}
 					]
 				}
 			},
