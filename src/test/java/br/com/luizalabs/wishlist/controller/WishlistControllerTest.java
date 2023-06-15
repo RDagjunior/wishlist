@@ -41,168 +41,174 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @WebMvcTest(WishlistController.class)
 class WishlistControllerTest {
 
-    private static final String BASE_URL = "/customer-wishlists/";
-    @RegisterExtension
-    static MockGenerator mockGenerator = MockGenerator.instance();
-    private final String customerId = "customerId";
-    private final String productId = "productId";
+  private static final String BASE_URL = "/customer-wishlists/";
+  @RegisterExtension
+  static MockGenerator mockGenerator = MockGenerator.instance();
+  private final String customerId = "customerId";
+  private final String productId = "productId";
 
-    @MockBean
-    private WishlistService service;
-    private MockMvc mockMvc;
-    private Wishlist wishlist;
-    private WishlistResponse wishlistResponse;
-    private AddProductPayload productPayload;
+  @MockBean
+  private WishlistService service;
+  private MockMvc mockMvc;
+  private Wishlist wishlist;
+  private WishlistResponse wishlistResponse;
+  private AddProductPayload productPayload;
 
-    @BeforeEach
-    private void beforeEach() {
-        productPayload = mockGenerator.generateFromJson("addProductPayload").as(AddProductPayload.class);
-        wishlist = mockGenerator.generateFromJson("wishlist").as(Wishlist.class);
-        wishlistResponse = new WishlistResponse(wishlist);
+  @BeforeEach
+  private void beforeEach() {
+    productPayload = mockGenerator.generateFromJson("addProductPayload")
+        .as(AddProductPayload.class);
+    wishlist = mockGenerator.generateFromJson("wishlist").as(Wishlist.class);
+    wishlistResponse = WishlistResponse.from(wishlist);
 
-        if (mockMvc == null) {
-            mockMvc = MockMvcBuilders.standaloneSetup(new WishlistController(service))
-                    .setControllerAdvice(new ExceptionHandlerController(new TestMessageSource("Product Test")))
-                    .setMessageConverters(mockGenerator.getHttpMessageConverter())
-                    .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
-                    .build();
-        }
-
-        reset(service);
+    if (mockMvc == null) {
+      mockMvc = MockMvcBuilders.standaloneSetup(new WishlistController(service))
+          .setControllerAdvice(
+              new ExceptionHandlerController(new TestMessageSource("Product Test")))
+          .setMessageConverters(mockGenerator.getHttpMessageConverter())
+          .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+          .build();
     }
 
-    @Test
-    void createWithSuccessAndExpectsStatusCode201() throws Exception {
-        when(service.addProduct(productPayload)).thenReturn(wishlistResponse);
+    reset(service);
+  }
 
-        assertResult(mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
-                        .content(mockGenerator.asString(productPayload)))
-                .andExpect(status().isCreated()));
+  @Test
+  void createWithSuccessAndExpectsStatusCode201() throws Exception {
+    when(service.addProduct(productPayload)).thenReturn(wishlistResponse);
 
-        verify(service).addProduct(any());
-    }
+    assertResult(mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
+            .content(mockGenerator.asString(productPayload)))
+        .andExpect(status().isCreated()));
 
-    @Test
-    void createWithWishlistTooBigExceptionAndExpectsStatusCode400() throws Exception {
-        when(service.addProduct(productPayload)).thenThrow(WishlistTooBigException.class);
+    verify(service).addProduct(any());
+  }
 
-        mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
-                        .content(mockGenerator.asString(productPayload)))
-                .andExpect(status().isBadRequest());
+  @Test
+  void createWithWishlistTooBigExceptionAndExpectsStatusCode400() throws Exception {
+    when(service.addProduct(productPayload)).thenThrow(WishlistTooBigException.class);
 
-        verify(service).addProduct(any());
-    }
+    mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
+            .content(mockGenerator.asString(productPayload)))
+        .andExpect(status().isBadRequest());
 
-    @Test
-    void createWithInvalidPayloadAndExpectsStatusCode400() throws Exception {
-        productPayload.setProductId(null);
-        mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
-                        .content(mockGenerator.asString(productPayload)))
-                .andExpect(status().isBadRequest());
+    verify(service).addProduct(any());
+  }
 
-        verify(service, never()).addProduct(any());
-    }
+  @Test
+  void createWithInvalidPayloadAndExpectsStatusCode400() throws Exception {
+    productPayload.setProductId(null);
+    mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
+            .content(mockGenerator.asString(productPayload)))
+        .andExpect(status().isBadRequest());
 
-    @Test
-    void createWithProductAlreadyOnWishListExceptionAndExpectsStatusCode409() throws Exception {
-        when(service.addProduct(productPayload)).thenThrow(ProductAlreadyOnWishListException.class);
+    verify(service, never()).addProduct(any());
+  }
 
-        mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
-                        .content(mockGenerator.asString(productPayload)))
-                .andExpect(status().isConflict());
+  @Test
+  void createWithProductAlreadyOnWishListExceptionAndExpectsStatusCode409() throws Exception {
+    when(service.addProduct(productPayload)).thenThrow(ProductAlreadyOnWishListException.class);
 
-        verify(service).addProduct(any());
-    }
+    mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
+            .content(mockGenerator.asString(productPayload)))
+        .andExpect(status().isConflict());
 
-    @Test
-    void CreateWithInvalidPayloadAndExpectStatusCode400() throws Exception {
-        mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content("{aa:bb}"))
-                .andExpect(status().isBadRequest());
+    verify(service).addProduct(any());
+  }
 
-        verify(service, never()).addProduct(any());
-    }
+  @Test
+  void CreateWithInvalidPayloadAndExpectStatusCode400() throws Exception {
+    mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content("{aa:bb}"))
+        .andExpect(status().isBadRequest());
 
-    @Test
-    void findByCustomerIdWithSuccessAndExpectStatusCode200() throws Exception {
-        when(service.findById(customerId)).thenReturn(wishlistResponse);
+    verify(service, never()).addProduct(any());
+  }
 
-        assertResult(
-                mockMvc.perform(
-                                get(BASE_URL.concat(customerId)).contentType(MediaType.APPLICATION_JSON))
-                        .andExpect(status().isOk()));
+  @Test
+  void findByCustomerIdWithSuccessAndExpectStatusCode200() throws Exception {
+    when(service.findById(customerId)).thenReturn(wishlistResponse);
 
-        verify(service).findById(customerId);
-    }
-
-    @Test
-    void findByIdWithWishlistNotFoundExceptionAndExpectStatusCode404() throws Exception {
-        when(service.findById(customerId)).thenThrow(WishlistNotFoundException.class);
-
+    assertResult(
         mockMvc.perform(
-                        get(BASE_URL.concat(customerId)).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                get(BASE_URL.concat(customerId)).contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk()));
 
-        verify(service).findById(customerId);
+    verify(service).findById(customerId);
+  }
+
+  @Test
+  void findByIdWithWishlistNotFoundExceptionAndExpectStatusCode404() throws Exception {
+    when(service.findById(customerId)).thenThrow(WishlistNotFoundException.class);
+
+    mockMvc.perform(
+            get(BASE_URL.concat(customerId)).contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+
+    verify(service).findById(customerId);
+  }
+
+  @Test
+  void removeProductFromCustomerWishlistWithSuccessAndExpectStatusCode200() throws Exception {
+    when(service.removeProductFromCustomerWishlist(customerId, productId)).thenReturn(
+        wishlistResponse);
+
+    assertResult(mockMvc.perform(
+            delete(BASE_URL.concat(customerId))
+                .queryParam("productId", productId)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk()));
+
+    verify(service).removeProductFromCustomerWishlist(customerId, productId);
+  }
+
+  @Test
+  void removeProductFromCustomerWishlistWithWishlistNotFoundExceptionAndExpectStatusCode404()
+      throws Exception {
+    doThrow(new WishlistNotFoundException()).when(service)
+        .removeProductFromCustomerWishlist(customerId, productId);
+
+    mockMvc.perform(
+            delete(BASE_URL.concat(customerId))
+                .queryParam("productId", productId)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+
+    verify(service).removeProductFromCustomerWishlist(customerId, productId);
+  }
+
+  @Test
+  void hasProductWithSuccessAndExpectStatusCode200() throws Exception {
+    when(service.hasProduct(customerId, productId)).thenReturn(true);
+
+    mockMvc.perform(
+            get(BASE_URL.concat(customerId).concat("/existsProduct/").concat(productId))
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    verify(service).hasProduct(customerId, productId);
+  }
+
+  @Test
+  void hasProductWithWishlistNotFoundExceptionAndExpectStatusCode404() throws Exception {
+    doThrow(new WishlistNotFoundException()).when(service).hasProduct(customerId, productId);
+
+    mockMvc.perform(
+            get(BASE_URL.concat(customerId).concat("/existsProduct/").concat(productId))
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+
+    verify(service).hasProduct(customerId, productId);
+  }
+
+
+  private void assertResult(ResultActions resultActions) throws Exception {
+    resultActions.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.customerId", is(wishlistResponse.getCustomerId())));
+
+    for (int i = 0; i < wishlistResponse.getProducts().size(); i++) {
+      resultActions.andExpect(
+          jsonPath("$.products[" + i + "]", is(wishlistResponse.getProducts().get(i))));
+
     }
-
-    @Test
-    void removeProductFromCustomerWishlistWithSuccessAndExpectStatusCode200() throws Exception {
-        when(service.removeProductFromCustomerWishlist(customerId, productId)).thenReturn(wishlistResponse);
-
-        assertResult(mockMvc.perform(
-                        delete(BASE_URL.concat(customerId))
-                                .queryParam("productId", productId)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()));
-
-        verify(service).removeProductFromCustomerWishlist(customerId, productId);
-    }
-
-    @Test
-    void removeProductFromCustomerWishlistWithWishlistNotFoundExceptionAndExpectStatusCode404() throws Exception {
-        doThrow(new WishlistNotFoundException()).when(service).removeProductFromCustomerWishlist(customerId, productId);
-
-        mockMvc.perform(
-                        delete(BASE_URL.concat(customerId))
-                                .queryParam("productId", productId)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-
-        verify(service).removeProductFromCustomerWishlist(customerId, productId);
-    }
-
-    @Test
-    void hasProductWithSuccessAndExpectStatusCode200() throws Exception {
-        when(service.hasProduct(customerId, productId)).thenReturn(true);
-
-        mockMvc.perform(
-                        get(BASE_URL.concat(customerId).concat("/existsProduct/").concat(productId))
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-        verify(service).hasProduct(customerId, productId);
-    }
-
-    @Test
-    void hasProductWithWishlistNotFoundExceptionAndExpectStatusCode404() throws Exception {
-        doThrow(new WishlistNotFoundException()).when(service).hasProduct(customerId, productId);
-
-        mockMvc.perform(
-                        get(BASE_URL.concat(customerId).concat("/existsProduct/").concat(productId))
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-
-        verify(service).hasProduct(customerId, productId);
-    }
-
-
-    private void assertResult(ResultActions resultActions) throws Exception {
-        resultActions.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.customerId", is(wishlistResponse.getCustomerId())));
-
-        for (int i = 0; i < wishlistResponse.getProducts().size(); i++) {
-            resultActions.andExpect(jsonPath("$.products[" + i + "]", is(wishlistResponse.getProducts().get(i))));
-
-        }
-    }
+  }
 }

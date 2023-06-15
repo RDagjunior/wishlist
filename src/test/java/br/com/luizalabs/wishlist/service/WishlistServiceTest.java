@@ -25,158 +25,160 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@RunWith(MockitoJUnitRunner.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WishlistServiceTest {
 
-    @RegisterExtension
-    static MockGenerator mockGenerator = MockGenerator.instance();
-    private final String customerId = "customerId";
-    private final String productId = "productId1";
-    @Mock
-    WishlistRepository repository;
-    @InjectMocks
-    private WishlistService service;
-    private Wishlist wishlist;
-    private AddProductPayload productPayload;
+  @RegisterExtension
+  static MockGenerator mockGenerator = MockGenerator.instance();
+  private final String customerId = "customerId";
+  private final String productId = "productId1";
+  @Mock
+  WishlistRepository repository;
+  @InjectMocks
+  private WishlistService service;
+  private Wishlist wishlist;
+  private AddProductPayload productPayload;
 
 
-    @BeforeEach
-    public void beforeEach() {
-        productPayload = mockGenerator.generateFromJson("addProductPayload").as(AddProductPayload.class);
-        wishlist = mockGenerator.generateFromJson("wishlist").as(Wishlist.class);
+  @BeforeEach
+  public void beforeEach() {
+    productPayload = mockGenerator.generateFromJson("addProductPayload")
+        .as(AddProductPayload.class);
+    wishlist = mockGenerator.generateFromJson("wishlist").as(Wishlist.class);
 
-        reset(repository);
+    reset(repository);
+  }
+
+  @Test
+  void addProductInNotExistingWishlistWithSuccess() {
+    when(repository.save(any())).thenReturn(wishlist);
+    when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(false);
+
+    assertResult(service.addProduct(productPayload), 2);
+
+    verify(repository).existsByCustomerId(any());
+    verify(repository).save(any());
+  }
+
+  @Test
+  void addProductInExistingWishlistWithSuccess() {
+    when(repository.save(any())).thenReturn(wishlist);
+    when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
+    when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(
+        Optional.of(wishlist));
+
+    assertResult(service.addProduct(productPayload), 3);
+
+    verify(repository).existsByCustomerId(any());
+    verify(repository).save(any());
+  }
+
+  @Test
+  void addProductThatAlreadyExistsInExistingWishlistAndExpectProductAlreadyOnWishListException() {
+    when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
+    when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(
+        Optional.of(wishlist));
+
+    productPayload.setProductId("productId1");
+    assertThrows(ProductAlreadyOnWishListException.class, () -> service.addProduct(productPayload));
+
+    verify(repository).existsByCustomerId(any());
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void addProductInExistingWishlistAndExpectWishlistTooBigException() {
+    when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
+    when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(
+        Optional.of(wishlist));
+    for (int i = 0; i < 18; i++) {
+      wishlist.getProducts().add("product" + i);
     }
+    assertThrows(WishlistTooBigException.class, () -> service.addProduct(productPayload));
 
-    @Test
-    void addProductInNotExistingWishlistWithSuccess() {
-        when(repository.save(any())).thenReturn(wishlist);
-        when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(false);
+    verify(repository).existsByCustomerId(any());
+    verify(repository, never()).save(any());
+  }
 
-        assertResult(service.addProduct(productPayload), 2);
+  @Test
+  void findWishlistByCustomerIdWithSuccess() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
 
-        verify(repository).existsByCustomerId(any());
-        verify(repository).save(any());
-    }
+    assertResult(service.findById(customerId), 2);
+  }
 
-    @Test
-    void addProductInExistingWishlistWithSuccess() {
-        when(repository.save(any())).thenReturn(wishlist);
-        when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
-        when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(Optional.of(wishlist));
+  @Test
+  void findNonExistentWishlistByCustomerIdAndExpectWishlistNotFoundException() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
 
-        assertResult(service.addProduct(productPayload), 3);
+    assertThrows(WishlistNotFoundException.class, () -> service.findById(customerId));
+  }
 
-        verify(repository).existsByCustomerId(any());
-        verify(repository).save(any());
-    }
+  @Test
+  void removeExistingProductFromCustomerWishlistWithSuccess() {
+    when(repository.save(any())).thenReturn(wishlist);
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
 
-    @Test
-    void addProductThatAlreadyExistsInExistingWishlistAndExpectProductAlreadyOnWishListException() {
-        when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
-        when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(Optional.of(wishlist));
+    assertResult(service.removeProductFromCustomerWishlist(customerId, productId), 1);
+    verify(repository).save(any());
+  }
 
-        productPayload.setProductId("productId1");
-        assertThrows(ProductAlreadyOnWishListException.class, () -> service.addProduct(productPayload));
+  @Test
+  void removeNonExistingProductFromCustomerWishlistWithSuccess() {
+    when(repository.save(any())).thenReturn(wishlist);
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
 
-        verify(repository).existsByCustomerId(any());
-        verify(repository, never()).save(any());
-    }
+    assertResult(service.removeProductFromCustomerWishlist(customerId, "product"), 2);
+    verify(repository).save(any());
+  }
 
-    @Test
-    void addProductInExistingWishlistAndExpectWishlistTooBigException() {
-        when(repository.existsByCustomerId(productPayload.getCustomerId())).thenReturn(true);
-        when(repository.findByCustomerId(productPayload.getCustomerId())).thenReturn(Optional.of(wishlist));
-        for (int i = 0; i < 18; i++) {
-            wishlist.getProducts().add("product" + i);
-        }
-        assertThrows(WishlistTooBigException.class, () -> service.addProduct(productPayload));
+  @Test
+  void removeProductFromCustomerNotFoundWishlistAndExpectWishlistNotFoundException() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
 
-        verify(repository).existsByCustomerId(any());
-        verify(repository, never()).save(any());
-    }
+    assertThrows(WishlistNotFoundException.class,
+        () -> service.removeProductFromCustomerWishlist(customerId, productId));
 
-    @Test
-    void findWishlistByCustomerIdWithSuccess() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
+    verify(repository, never()).save(any());
+  }
 
-        assertResult(service.findById(customerId), 2);
-    }
+  @Test
+  void hasProductWithExistingProductOnCustomerWishList() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
 
-    @Test
-    void findNonExistentWishlistByCustomerIdAndExpectWishlistNotFoundException() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
+    assertTrue(service.hasProduct(customerId, productId));
 
-        assertThrows(WishlistNotFoundException.class, () -> service.findById(customerId));
-    }
+    verify(repository, never()).save(any());
+  }
 
-    @Test
-    void removeExistingProductFromCustomerWishlistWithSuccess() {
-        when(repository.save(any())).thenReturn(wishlist);
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
+  @Test
+  void hasProductWithNonExistingProductOnCustomerWishList() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
 
-        assertResult(service.removeProductFromCustomerWishlist(customerId, productId), 1);
-        verify(repository).save(any());
-    }
+    assertFalse(service.hasProduct(customerId, "product"));
 
-    @Test
-    void removeNonExistingProductFromCustomerWishlistWithSuccess() {
-        when(repository.save(any())).thenReturn(wishlist);
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
+    verify(repository, never()).save(any());
+  }
 
-        assertResult(service.removeProductFromCustomerWishlist(customerId, "product"), 2);
-        verify(repository).save(any());
-    }
+  @Test
+  void hasProductWithOnCustomerWithoutWishlistAndExpectWishlistNotFoundException() {
+    when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
 
-    @Test
-    void removeProductFromCustomerNotFoundWishlistAndExpectWishlistNotFoundException() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
+    assertThrows(WishlistNotFoundException.class, () -> service.hasProduct(customerId, productId));
 
-        assertThrows(WishlistNotFoundException.class, () -> service.removeProductFromCustomerWishlist(customerId, productId));
+    verify(repository, never()).save(any());
+  }
 
-        verify(repository, never()).save(any());
-    }
+  public void assertResult(WishlistResponse result, int expectedListSize) {
+    assertNotNull(result);
+    assertEquals(wishlist.getCustomerId(), result.getCustomerId());
+    assertEquals(wishlist.getProducts(), result.getProducts());
+    assertEquals(expectedListSize, result.getProducts().size());
 
-    @Test
-    void hasProductWithExistingProductOnCustomerWishList() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
-
-        assertTrue(service.hasProduct(customerId, productId));
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void hasProductWithNonExistingProductOnCustomerWishList() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.of(wishlist));
-
-        assertFalse(service.hasProduct(customerId, "product"));
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void hasProductWithOnCustomerWithoutWishlistAndExpectWishlistNotFoundException() {
-        when(repository.findByCustomerId(customerId)).thenReturn(Optional.empty());
-
-        assertThrows(WishlistNotFoundException.class, () -> service.hasProduct(customerId, productId));
-
-        verify(repository, never()).save(any());
-    }
-
-    public void assertResult(WishlistResponse result, int expectedListSize) {
-        assertNotNull(result);
-        assertEquals(wishlist.getCustomerId(), result.getCustomerId());
-        assertEquals(wishlist.getProducts(), result.getProducts());
-        assertEquals(expectedListSize, result.getProducts().size());
-
-    }
+  }
 }

@@ -1,6 +1,13 @@
 spring:
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: wishlist
+    application:
+        name: wishlist
+    profiles:
+        default: local
+    data:
+        mongodb:
+            host: localhost
+            port: 27017
+            database: wishlist
+logging:
+    pattern:
+        level: '%5p'

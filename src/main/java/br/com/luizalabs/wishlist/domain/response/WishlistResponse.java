@@ -1,24 +1,28 @@
 package br.com.luizalabs.wishlist.domain.response;
 
 import br.com.luizalabs.wishlist.domain.Wishlist;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class WishlistResponse {
 
-    @JsonIgnore
-    private final Wishlist wishlist;
+  private String id;
+  private String customerId;
+  private List<String> products;
 
-    @ApiModelProperty("Wishlist's customer id")
-    public String getCustomerId() {
-        return wishlist.getCustomerId();
-    }
+  public static WishlistResponse from(Wishlist entity) {
+    return WishlistResponse.builder()
+        .id(entity.getId() != null ? entity.getId().toHexString() : null)
+        .customerId(entity.getCustomerId())
+        .products(entity.getProducts())
+        .build();
+  }
 
-    @ApiModelProperty("Wishlist's products")
-    public List<String> getProducts() {
-        return wishlist.getProducts();
-    }
 }
